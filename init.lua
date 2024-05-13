@@ -190,6 +190,12 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- martin - resize splits
+vim.keymap.set('n', '<M-h>', '<C-w>5>', { desc = 'Resize split horizontally' })
+vim.keymap.set('n', '<M-l>', '<C-w>5<', { desc = 'Resize split horizontally' })
+vim.keymap.set('n', '<M-j>', '<C-w>-', { desc = 'Resize split vertically' })
+vim.keymap.set('n', '<M-k>', '<C-w>+', { desc = 'Resize split vertically' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -565,7 +571,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {}, -- martin
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -577,6 +583,7 @@ require('lazy').setup({
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
         --
+        java_language_server = {}, -- martin - java lsp
 
         lua_ls = {
           -- cmd = {...},
@@ -600,7 +607,9 @@ require('lazy').setup({
       --    :Mason
       --
       --  You can press `g?` for help in this menu.
-      require('mason').setup()
+      require('mason').setup {
+        -- log_level = vim.log.levels.DEBUG, -- martin
+      }
 
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.

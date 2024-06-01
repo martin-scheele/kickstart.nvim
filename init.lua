@@ -589,7 +589,8 @@ require('lazy').setup({
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
         --
-        java_language_server = {}, -- martin - java lsp
+        -- java_language_server = {}, -- martin - java lsp
+        jdtls = {},
 
         lua_ls = {
           -- cmd = {...},
@@ -851,7 +852,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'java' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -895,6 +896,9 @@ require('lazy').setup({
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+
+  -- martin
+  { 'mfussenegger/nvim-jdtls' },
 
   {
     'ThePrimeagen/harpoon',
@@ -951,7 +955,7 @@ require('lazy').setup({
           :find()
       end
 
-      vim.keymap.set('n', '<C-h>', function()
+      vim.keymap.set('n', '<C-S-h>', function()
         toggle_telescope(harpoon:list())
       end, { desc = 'Open [H]arpoon window' })
 

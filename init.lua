@@ -589,10 +589,7 @@ require('lazy').setup({
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
-        --
-        -- java_language_server = {}, -- martin - java lsp
         jdtls = {},
-
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -624,6 +621,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'google-java-format',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -899,7 +897,10 @@ require('lazy').setup({
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- martin
-  { 'mfussenegger/nvim-jdtls' },
+  {
+    'mfussenegger/nvim-jdtls',
+    dependencies = { 'mfussenegger/nvim-dap'},
+  },
 
   {
     'ThePrimeagen/harpoon',

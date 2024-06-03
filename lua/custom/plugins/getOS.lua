@@ -1,4 +1,4 @@
---  /user.getOS.lua
+--  /custom.plugins.getOS.lua
 local getOS = {}
 
 function getOS.getName()

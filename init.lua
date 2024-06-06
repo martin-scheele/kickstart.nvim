@@ -100,8 +100,8 @@ vim.g.have_nerd_font = true -- martin - false to true
 
 -- martin - indent styling
 vim.opt.tabstop = 8
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 
 vim.opt.shell = "pwsh"
@@ -622,6 +622,7 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'google-java-format',
+        'clang-format',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -673,7 +674,8 @@ require('lazy').setup({
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
         -- javascript = { { "prettierd", "prettier" } },
-        java = { 'google-java-format' }, -- martin
+        -- java = { 'google-java-format' }, -- martin
+        java = { 'clang-format' }, -- martin
       },
     },
   },
@@ -937,46 +939,46 @@ require('lazy').setup({
         harpoon:list():select(4)
       end)
 
-      -- telescope config
-      local conf = require('telescope.config').values
-      local function toggle_telescope(harpoon_files)
-        local file_paths = {}
-        for _, item in ipairs(harpoon_files.items) do
-          table.insert(file_paths, item.value)
-        end
-
-        require('telescope.pickers')
-          .new({}, {
-            prompt_title = 'Harpoon',
-            finder = require('telescope.finders').new_table {
-              results = file_paths,
-            },
-            previewer = conf.file_previewer {},
-            sorter = conf.generic_sorter {},
-          })
-          :find()
-      end
-
-      vim.keymap.set('n', '<C-S-h>', function()
-        toggle_telescope(harpoon:list())
-      end, { desc = 'Open [H]arpoon window' })
-
-      -- open files in splits / tabs
-      harpoon:extend {
-        UI_CREATE = function(cx)
-          vim.keymap.set('n', '<C-v>', function()
-            harpoon.ui:select_menu_item { vsplit = true }
-          end, { buffer = cx.bufnr })
-
-          vim.keymap.set('n', '<C-x>', function()
-            harpoon.ui:select_menu_item { split = true }
-          end, { buffer = cx.bufnr })
-
-          vim.keymap.set('n', '<C-t>', function()
-            harpoon.ui:select_menu_item { tabedit = true }
-          end, { buffer = cx.bufnr })
-        end,
-      }
+      -- -- telescope config
+      -- local conf = require('telescope.config').values
+      -- local function toggle_telescope(harpoon_files)
+      --   local file_paths = {}
+      --   for _, item in ipairs(harpoon_files.items) do
+      --     table.insert(file_paths, item.value)
+      --   end
+      --
+      --   require('telescope.pickers')
+      --     .new({}, {
+      --       prompt_title = 'Harpoon',
+      --       finder = require('telescope.finders').new_table {
+      --         results = file_paths,
+      --       },
+      --       previewer = conf.file_previewer {},
+      --       sorter = conf.generic_sorter {},
+      --     })
+      --     :find()
+      -- end
+      --
+      -- vim.keymap.set('n', '<C-S-h>', function()
+      --   toggle_telescope(harpoon:list())
+      -- end, { desc = 'Open [H]arpoon window' })
+      --
+      -- -- open files in splits / tabs
+      -- harpoon:extend {
+      --   UI_CREATE = function(cx)
+      --     vim.keymap.set('n', '<C-v>', function()
+      --       harpoon.ui:select_menu_item { vsplit = true }
+      --     end, { buffer = cx.bufnr })
+      --
+      --     vim.keymap.set('n', '<C-x>', function()
+      --       harpoon.ui:select_menu_item { split = true }
+      --     end, { buffer = cx.bufnr })
+      --
+      --     vim.keymap.set('n', '<C-t>', function()
+      --       harpoon.ui:select_menu_item { tabedit = true }
+      --     end, { buffer = cx.bufnr })
+      --   end,
+      -- }
     end,
   },
 

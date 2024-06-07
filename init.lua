@@ -103,8 +103,15 @@ vim.opt.tabstop = 8
 vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
+-- vim.opt.colorcolumn = '81'
 
-vim.opt.shell = "pwsh"
+local getOS = require 'custom.plugins.getOS'
+if getOS.getName() == 'Windows' then
+  vim.opt.shell = 'pwsh'
+elseif getOS.getName() == 'Linux' then
+  vim.opt.shell = 'bash'
+end
+
 -- Make line numbers default
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
@@ -675,6 +682,7 @@ require('lazy').setup({
         -- is found.
         -- javascript = { { "prettierd", "prettier" } },
         -- java = { 'google-java-format' }, -- martin
+        c = { 'clang-format' },
         java = { 'clang-format' }, -- martin
       },
     },
@@ -700,12 +708,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -791,20 +799,30 @@ require('lazy').setup({
     end,
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+  -- { -- You can easily change to a different colorscheme.
+  --   -- Change the name of the colorscheme plugin below, and then
+  --   -- change the command in the config to whatever the name of that colorscheme is.
+  --   --
+  --   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+  --   'folke/tokyonight.nvim',
+  --   priority = 1000, -- Make sure to load this before all the other start plugins.
+  --   init = function()
+  --     -- Load the colorscheme here.
+  --     -- Like many other themes, this one has different styles, and you could load
+  --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --     vim.cmd.colorscheme 'tokyonight-night'
+  --
+  --     -- You can configure highlights by doing something like:
+  --     vim.cmd.hi 'Comment gui=none'
+  --   end,
+  -- },
+  { 'folke/tokyonight.nvim', priority = 1000 },
+  {
+    'catppuccin/nvim',
+    name = 'catppuccin',
+    priority = 1000,
     init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
-
-      -- You can configure highlights by doing something like:
+      vim.cmd.colorscheme 'catppuccin-macchiato'
       vim.cmd.hi 'Comment gui=none'
     end,
   },
@@ -821,7 +839,7 @@ require('lazy').setup({
       --  - va)  - [V]isually select [A]round [)]paren
       --  - yinq - [Y]ank [I]nside [N]ext [']quote
       --  - ci'  - [C]hange [I]nside [']quote
-      require('mini.ai').setup { n_lines = 500 }
+      -- require('mini.ai').setup { n_lines = 500 }
 
       -- Add/delete/replace surroundings (brackets, quotes, etc.)
       --
@@ -847,6 +865,21 @@ require('lazy').setup({
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
+      -- martin
+      require('mini.indentscope').setup {
+        draw = {
+          delay = 20,
+          animation = function()
+            return 0
+          end,
+        },
+        options = {
+          border = 'top',
+          indent_at_cursor = false,
+          -- try_as_border = true,
+        },
+        symbol = '▏',
+      }
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -864,6 +897,15 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = 'gnn', -- set to `false` to disable one of the mappings
+          node_incremental = 'grn',
+          scope_incremental = 'grc',
+          node_decremental = 'grm',
+        },
+      },
     },
     config = function(_, opts)
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
@@ -882,6 +924,29 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'echasnovski/mini.ai',
+    event = 'VeryLazy',
+    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
+    opts = function()
+      local ai = require 'mini.ai'
+      return {
+        n_lines = 500,
+        custom_textobjects = {
+          o = ai.gen_spec.treesitter {
+            a = { '@block.outer', '@conditional.outer', '@loop.outer' },
+            i = { '@block.inner', '@conditional.inner', '@loop.inner' },
+          },
+          f = ai.gen_spec.treesitter { a = '@function.outer', i = '@function.inner' },
+          c = ai.gen_spec.treesitter { a = '@class.outer', i = '@class.inner' },
+        },
+      }
+    end,
+    config = function(_, opts)
+      require('mini.ai').setup(opts)
+    end,
+  },
+
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
@@ -892,16 +957,23 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
-  -- martin
+  -- {
+  --   'lukas-reineke/virt-column.nvim',
+  --   opts = {
+  --     char = '▏',
+  --     virtcolumn = '+1,80',
+  --   },
+  -- },
+
   {
     'mfussenegger/nvim-jdtls',
-    dependencies = { 'mfussenegger/nvim-dap'},
+    dependencies = { 'mfussenegger/nvim-dap' },
   },
 
   {
@@ -1009,7 +1081,6 @@ require('lazy').setup({
     },
   },
 })
-
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

@@ -13,11 +13,11 @@ local getOS = require 'custom.plugins.getOS'
 
 if getOS.getName() == 'Windows' then
   workspace_path = vim.fn.expand '~/AppData/Local/nvim-data/jdtls-workspace/'
-  jdtls_install = vim.fn.expand '~/.local/share/nvim/mason/packages/jdtls'
+  jdtls_install = vim.fn.expand '~/AppData/Local/nvim-data/mason/packages/jdtls'
   config_path = jdtls_install .. '/config_linux'
 elseif getOS.getName() == 'Linux' then
   workspace_path = vim.fn.expand '~/.local/share/nvim/jdtls-workspace/'
-  jdtls_install = vim.fn.expand '~/AppData/Local/nvim-data/mason/packages/jdtls'
+  jdtls_install = vim.fn.expand '~/.local/share/nvim/mason/packages/jdtls'
   config_path = jdtls_install .. '/config_win'
 end
 

@@ -112,6 +112,13 @@ elseif getOS.getName() == 'Linux' then
   vim.opt.shell = 'bash'
 end
 
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = '*',
+  callback = function()
+    vim.opt_local.formatoptions:remove { 'r', 'o' }
+  end,
+})
+
 -- Make line numbers default
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
@@ -601,6 +608,7 @@ require('lazy').setup({
           -- cmd = {...},
           -- filetypes = { ...},
           -- capabilities = {},
+          capabilties = capabilities,
           settings = {
             Lua = {
               completion = {
@@ -628,7 +636,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        -- 'google-java-format',
+        'google-java-format',
         'clang-format',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -684,9 +692,9 @@ require('lazy').setup({
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
         -- javascript = { { "prettierd", "prettier" } },
-        -- java = { 'google-java-format' }, -- martin
+        java = { 'google-java-format' },
         c = { 'clang-format' },
-        java = { 'clang-format' }, -- martin
+        -- java = { 'clang-format' },
       },
     },
   },
@@ -876,13 +884,46 @@ require('lazy').setup({
             return 0
           end,
         },
+        mappings = {
+          -- Textobjects
+          object_scope = '',
+          object_scope_with_border = '',
+
+          -- Motions (jump to respective border line; if not present - body line)
+          goto_top = '',
+          goto_bottom = '',
+        },
         options = {
           border = 'top',
-          indent_at_cursor = false,
+          -- indent_at_cursor = false,
           -- try_as_border = true,
         },
         symbol = '▏',
       }
+      vim.api.nvim_create_autocmd({ 'FileType' }, {
+        desc = 'Disable indentscope for certain filetypes',
+        callback = function()
+          local ignore_filetypes = {
+            -- 'aerial',
+            -- 'dashboard',
+            'help',
+            'lazy',
+            -- 'leetcode.nvim',
+            'mason',
+            -- 'neo-tree',
+            -- 'NvimTree',
+            -- 'neogitstatus',
+            -- 'notify',
+            -- 'source_file',
+            -- 'startify',
+            -- 'toggleterm',
+            -- 'Trouble',
+          }
+          if vim.tbl_contains(ignore_filetypes, vim.bo.filetype) then
+            vim.b.miniindentscope_disable = true
+          end
+        end,
+      })
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -971,6 +1012,7 @@ require('lazy').setup({
             [']c'] = { query = '@class.outer', desc = 'Next class start' },
             [']i'] = { query = '@conditional.outer', desc = 'Next conditional start' },
             [']l'] = { query = '@loop.outer', desc = 'Next loop start' },
+            [']a'] = { query = '@parameter.inner', desc = 'Next parameter/argument start' },
 
             -- You can pass a query group to use query from `queries/<lang>/<query_group>.scm file in your runtime path.
             -- Below example nvim-treesitter's `locals.scm` and `folds.scm`. They also provide highlights.scm and indent.scm.
@@ -983,6 +1025,7 @@ require('lazy').setup({
             [']C'] = { query = '@class.outer', desc = 'Next class end' },
             [']I'] = { query = '@conditional.outer', desc = 'Next conditional end' },
             [']L'] = { query = '@loop.outer', desc = 'Next loop end' },
+            [']A'] = { query = '@parameter.outer', desc = 'Next parameter/argument end' },
           },
           goto_previous_start = {
             ['[f'] = { query = '@call.outer', desc = 'Prev function call start' },
@@ -990,6 +1033,7 @@ require('lazy').setup({
             ['[c'] = { query = '@class.outer', desc = 'Prev class start' },
             ['[i'] = { query = '@conditional.outer', desc = 'Prev conditional start' },
             ['[l'] = { query = '@loop.outer', desc = 'Prev loop start' },
+            ['[a'] = { query = '@parameter.inner', desc = 'Prev parameter/argument start' },
           },
           goto_previous_end = {
             ['[F'] = { query = '@call.outer', desc = 'Prev function call end' },
@@ -997,6 +1041,7 @@ require('lazy').setup({
             ['[C'] = { query = '@class.outer', desc = 'Prev class end' },
             ['[I'] = { query = '@conditional.outer', desc = 'Prev conditional end' },
             ['[L'] = { query = '@loop.outer', desc = 'Prev loop end' },
+            ['[A'] = { query = '@parameter.outer', desc = 'Prev parameter/argument end' },
           },
         },
       },

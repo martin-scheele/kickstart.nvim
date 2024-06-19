@@ -31,6 +31,9 @@ local workspace_dir = workspace_path .. project_name
 local jdtls = require 'jdtls'
 local extendedClientCapabilities = jdtls.extendedClientCapabilities
 
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
 -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
 local config = {
   -- The command that starts the language server
@@ -67,19 +70,19 @@ local config = {
   -- vim.fs.root requires Neovim 0.10.
   -- If you're using an earlier version, use: require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
   -- root_dir = require('jdtls.setup').find_root { '.git', 'mvnw', 'gradlew', 'pom.xml', 'build.gradle' },
-  root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew', 'pom.xml' }),
-  -- root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew' }),
+  -- root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew', 'pom.xml' }),
+  root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew' }),
 
   -- Here you can configure eclipse.jdt.ls specific settings
   -- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
   -- for a list of options
   settings = {
     java = {
-      -- inlay_hints = {
-      --   parameterNames = {
-      --     enabled = 'all',
-      --   },
-      -- },
+      inlay_hints = {
+        parameterNames = {
+          enabled = 'all',
+        },
+      },
       format = { enabled = false },
       maven = { downloadSources = true },
       references = { includeDecompiledSources = true },
@@ -107,6 +110,7 @@ local config = {
   --     },
   --   },
   -- },
+  capabilities = capabilities,
 }
 -- This starts a new client & server,
 -- or attaches to an existing client & server depending on the `root_dir`.

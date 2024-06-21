@@ -5,8 +5,9 @@
 -- local jdtls_install = vim.fn.expand '~/.local/share/nvim/mason/packages/jdtls'
 
 local workspace_path = ''
-local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local jdtls_install = ''
+local javadbg_install = ''
+local javatest_install = ''
 local config_path = ''
 
 local getOS = require 'custom.plugins.getOS'
@@ -14,13 +15,18 @@ local getOS = require 'custom.plugins.getOS'
 if getOS.getName() == 'Windows' then
   workspace_path = vim.fn.expand '~/AppData/Local/nvim-data/jdtls-workspace/'
   jdtls_install = vim.fn.expand '~/AppData/Local/nvim-data/mason/packages/jdtls'
-  config_path = jdtls_install .. '/config_linux'
+  javadbg_install = vim.fn.expand '~/AppData/Local/nvim-data/mason/packages/java-debug-adapter/extension/server/'
+  javatest_install = vim.fn.expand '~/AppData/Local/nvim-data/mason/packages/java-test/extension/server'
+  config_path = jdtls_install .. '/config_win'
 elseif getOS.getName() == 'Linux' then
   workspace_path = vim.fn.expand '~/.local/share/nvim/jdtls-workspace/'
   jdtls_install = vim.fn.expand '~/.local/share/nvim/mason/packages/jdtls'
-  config_path = jdtls_install .. '/config_win'
+  javadbg_install = vim.fn.expand '~/.local/share/nvim/mason/packages/java-debug-adapter/extension/server/'
+  javatest_install = vim.fn.expand '~/.local/share/nvim/mason/packages/java-test/extension/server/'
+  config_path = jdtls_install .. '/config_linux'
 end
 
+local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local workspace_dir = workspace_path .. project_name
 
 -- https://github.com/exosyphon/nvim/blob/main/ftplugin/java.lua
@@ -33,6 +39,11 @@ local extendedClientCapabilities = jdtls.extendedClientCapabilities
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+local bundles = {
+  vim.fn.glob(javadbg_install .. 'com.microsoft.java.debug.plugin-0.50.0.jar'),
+}
+vim.list_extend(bundles, vim.split(vim.fn.glob(javatest_install .. '*.jar', true), '\n'))
 
 -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
 local config = {
@@ -71,7 +82,8 @@ local config = {
   -- If you're using an earlier version, use: require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
   -- root_dir = require('jdtls.setup').find_root { '.git', 'mvnw', 'gradlew', 'pom.xml', 'build.gradle' },
   -- root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew', 'pom.xml' }),
-  root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew' }),
+  -- root_dir = vim.fs.root(0, { '.git', 'mvnw', 'gradlew' }),
+  root_dir = vim.fs.root(0, { 'pom.xml', 'gradlew' }),
 
   -- Here you can configure eclipse.jdt.ls specific settings
   -- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
@@ -99,7 +111,8 @@ local config = {
   -- If you don't plan on using the debugger or other eclipse.jdt.ls plugins you can remove this
   init_options = {
     extendedClientCapabilities = extendedClientCapabilities,
-    bundles = {},
+    -- bundles = {},
+    bundles = bundles,
   },
   -- capabilities = {
   --   textDocument = {
@@ -116,19 +129,6 @@ local config = {
 -- or attaches to an existing client & server depending on the `root_dir`.
 require('jdtls').start_or_attach(config)
 
--- local getOS = require 'custom.plugins.getOS'
--- local config = {}
--- local jdtls_path = ''
---
--- if getOS.getName() == 'Windows' then
---   jdtls_path = vim.fn.expand '~/AppData/Local/nvim-data/mason/bin/jdtls.cmd'
--- elseif getOS.getName() == 'Linux' then
---   jdtls_path = vim.fn.expand '~/.local/share/nvim/mason/bin/jdtls'
--- end
---
--- config = {
---   cmd = { jdtls_path },
---   root_dir = vim.fs.dirname(vim.fs.find({ 'gradlew', '.git', 'mvnw' }, { upward = true })[1]),
--- }
---
--- require('jdtls').start_or_attach(config)
+vim.keymap.set('n', '<leader>di', '<cmd>lua require"jdtls.dap".setup_dap_main_class_configs()<CR>', { desc = 'Debug: Initialize main class' })
+vim.keymap.set('n', '<leader>df', '<cmd>lua require"jdtls".test_class()<CR>', { desc = 'Debug: Test class' })
+vim.keymap.set('n', '<leader>dn', '<cmd>lua require"jdtls".test_nearest_method()<CR>', { desc = 'Debug: Test nearest method' })

@@ -1,4 +1,4 @@
---[[
+--[[init
 
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
@@ -116,7 +116,7 @@ local getOS = require 'custom.plugins.getOS'
 if getOS.getName() == 'Windows' then
   vim.opt.shell = 'pwsh'
 elseif getOS.getName() == 'Linux' then
-  vim.opt.shell = 'bash'
+  vim.opt.shell = 'zsh'
 end
 
 vim.api.nvim_create_autocmd('FileType', {
@@ -201,7 +201,9 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 --
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
-vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
+-- vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>') -- martin - uncommented
@@ -314,19 +316,36 @@ require('lazy').setup({
       require('which-key').setup()
 
       -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+      -- require('which-key').register {
+      --   ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
+      --   ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
+      --   ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
+      --   ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
+      --   ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+      --   ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
+      --   ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+      -- }
+      -- -- visual mode
+      -- require('which-key').register({
+      --   ['<leader>h'] = { 'Git [H]unk' },
+      -- }, { mode = 'v' })
+      require('which-key').add {
+        { '<leader>c', group = '[C]ode' },
+        { '<leader>c_', hidden = true },
+        { '<leader>d', group = '[D]ocument' },
+        { '<leader>d_', hidden = true },
+        -- { '<leader>h', group = 'Git [H]unk' },
+        -- { '<leader>h_', hidden = true },
+        { '<leader>r', group = '[R]ename' },
+        { '<leader>r_', hidden = true },
+        { '<leader>s', group = '[S]earch' },
+        { '<leader>s_', hidden = true },
+        { '<leader>t', group = '[T]oggle' },
+        { '<leader>t_', hidden = true },
+        { '<leader>w', group = '[W]orkspace' },
+        { '<leader>w_', hidden = true },
+        -- { '<leader>h', desc = 'Git [H]unk', mode = 'v' },
       }
-      -- visual mode
-      require('which-key').register({
-        ['<leader>h'] = { 'Git [H]unk' },
-      }, { mode = 'v' })
     end,
   },
 
@@ -387,11 +406,15 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+          file_ignore_patterns = {
+            'venv/',
+            '.class',
+          },
+          mappings = {
+            i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          },
+        },
         -- pickers = {}
         extensions = {
           ['ui-select'] = {
@@ -599,7 +622,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        clangd = {}, -- martin
+        -- clangd = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -610,6 +633,7 @@ require('lazy').setup({
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
+        clangd = {},
         jdtls = {},
         lua_ls = {
           -- cmd = {...},
@@ -626,6 +650,21 @@ require('lazy').setup({
             },
           },
         },
+        basedpyright = {
+          settings = {
+            basedpyright = {
+              -- autoImportCompletions = true,
+              disableOrganizeImports = true,
+              -- ignore = { '*' },
+              -- typeCheckingMode = 'off',
+              -- typeCheckingMode = 'standard',
+              -- typeCheckingMode = 'strict',
+              typeCheckingMode = 'all',
+            },
+          },
+        },
+        ruff = {},
+        zls = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -661,6 +700,14 @@ require('lazy').setup({
               require('lspconfig')[server_name].setup(server)
             end
           end,
+          ['ruff'] = function()
+            require('lspconfig').ruff.setup {
+              capabilities = capabilities,
+              on_attach = function(client, _)
+                client.server_capabilities.hoverProvider = false
+              end,
+            }
+          end,
         },
       }
     end,
@@ -681,17 +728,29 @@ require('lazy').setup({
     },
     opts = {
       notify_on_error = false,
+      -- format_on_save = function(bufnr)
+      --   -- Disable "format_on_save lsp_fallback" for languages that don't
+      --   -- have a well standardized coding style. You can add additional
+      --   -- languages here or re-enable it for the disabled ones.
+      --   local disable_filetypes = { c = true, cpp = true, java = true }
+      --   return {
+      --     timeout_ms = 500,
+      --     lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
+      --   }
+      -- end,
       format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local ignore_filetypes = { 'c', 'cpp', 'java' }
+        if vim.tbl_contains(ignore_filetypes, vim.bo[bufnr].filetype) then
+          return
+        end
         return {
           timeout_ms = 500,
-          lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
+          lsp_format = 'fallback',
         }
       end,
       formatters_by_ft = {
+        c = { 'clang-format' },
+        java = { 'google-java-format' },
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
@@ -699,9 +758,6 @@ require('lazy').setup({
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
         -- javascript = { { "prettierd", "prettier" } },
-        java = { 'google-java-format' },
-        c = { 'clang-format' },
-        -- java = { 'clang-format' },
       },
     },
   },
@@ -834,14 +890,62 @@ require('lazy').setup({
   --     vim.cmd.hi 'Comment gui=none'
   --   end,
   -- },
-  { 'folke/tokyonight.nvim', priority = 1000 },
+  -- { 'folke/tokyonight.nvim', priority = 1000 },
   {
     'catppuccin/nvim',
     name = 'catppuccin',
     priority = 1000,
+    opts = {
+      flavour = 'mocha', -- latte, frappe, macchiato, mocha
+      background = { -- :h background
+        -- light = 'latte',
+        -- dark = 'mocha',
+      },
+      transparent_background = false, -- disables setting the background color.
+      show_end_of_buffer = false, -- shows the '~' characters after the end of buffers
+      term_colors = false, -- sets terminal colors (e.g. `g:terminal_color_0`)
+      dim_inactive = {
+        -- enabled = false, -- dims the background color of inactive window
+        -- shade = 'dark',
+        -- percentage = 0.15, -- percentage of the shade to apply to the inactive window
+      },
+      no_italic = false, -- Force no italic
+      no_bold = false, -- Force no bold
+      no_underline = false, -- Force no underline
+      styles = { -- Handles the styles of general hi groups (see `:h highlight-args`):
+        comments = {}, -- Change the style of comments
+        conditionals = {},
+        loops = {},
+        functions = {},
+        keywords = {},
+        strings = {},
+        variables = {},
+        numbers = {},
+        booleans = {},
+        properties = {},
+        types = {},
+        operators = {},
+        -- miscs = {}, -- Uncomment to turn off hard-coded styles
+      },
+      color_overrides = {},
+      custom_highlights = {},
+      default_integrations = true,
+      integrations = {
+        -- default_integrations = false;
+        cmp = true,
+        -- gitsigns = true,
+        -- nvimtree = true,
+        treesitter = true,
+        -- notify = false,
+        mini = {
+          enabled = true,
+          indentscope_color = '',
+        },
+        -- For more plugins integrations please scroll down (https://github.com/catppuccin/nvim#integrations)
+      },
+    },
     init = function()
       vim.cmd.colorscheme 'catppuccin-mocha'
-      -- vim.cmd.colorscheme 'catppuccin-macchiato'
       vim.cmd.hi 'Comment gui=none'
     end,
   },
@@ -939,7 +1043,25 @@ require('lazy').setup({
     dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'java' },
+      ensure_installed = {
+        'bash',
+        'c',
+        'cpp',
+        'diff',
+        'html',
+        'java',
+        'lua',
+        'luadoc',
+        'markdown',
+        'python',
+        'rust',
+        'toml',
+        'vim',
+        'vimdoc',
+        'xml',
+        'yaml',
+        'zig',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -952,12 +1074,12 @@ require('lazy').setup({
       indent = { enable = true, disable = { 'ruby' } },
       incremental_selection = {
         enable = true,
-        keymaps = {
-          init_selection = 'gnn', -- set to `false` to disable one of the mappings
-          node_incremental = 'grn',
-          scope_incremental = 'grc',
-          node_decremental = 'grm',
-        },
+        -- keymaps = {
+        --   init_selection = 'gnn', -- set to `false` to disable one of the mappings
+        --   node_incremental = 'grn',
+        --   scope_incremental = 'grc',
+        --   node_decremental = 'grm',
+        -- },
       },
       textobjects = {
         select = {
@@ -1123,6 +1245,59 @@ require('lazy').setup({
   },
 
   {
+    'mrcjkb/rustaceanvim',
+    version = '^4',
+    ft = { 'rust' },
+    opts = {
+      server = {
+        on_attach = function(_, bufnr)
+          vim.keymap.set('n', '<leader>ca', function()
+            vim.cmd.RustLsp 'codeAction'
+          end, { desc = '[C]ode [A]ction', buffer = bufnr })
+          vim.keymap.set('n', '<leader>dr', function()
+            vim.cmd.RustLsp 'debuggables'
+          end, { desc = '[D]ebuggables, [R]ust', buffer = bufnr })
+        end,
+        default_settings = {
+          -- assist = {
+          --   importEnforceGranularity = true,
+          --   importPrefix = 'crate',
+          -- },
+          cargo = {
+            allFeatures = true,
+            loadOutDirsFromCheck = true,
+            buildScripts = {
+              enable = true,
+            },
+          },
+          -- checkOnSave = false,
+          checkOnSave = true,
+          -- inlayHints = {
+          --   locationLinks = false,
+          -- },
+          diagnostics = {
+            enable = true,
+            -- experimental = {
+            --   enable = true,
+            -- },
+          },
+          procMacro = {
+            enable = true,
+            -- ignored = {
+            --   ['async-trait'] = { 'async_trait' },
+            --   ['napi-derive'] = { 'napi' },
+            --   ['async-recursion'] = { 'async_recursion' },
+            -- },
+          },
+        },
+      },
+    },
+    config = function(_, opts)
+      vim.g.rustaceanvim = vim.tbl_deep_extend('keep', vim.g.rustaceanvim or {}, opts or {})
+    end,
+  },
+
+  {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
     dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
@@ -1134,6 +1309,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>a', function()
         harpoon:list():add()
       end, { desc = '[A]dd buffer to harpoon list' })
+
       vim.keymap.set('n', '<leader>h', function()
         harpoon.ui:toggle_quick_menu(harpoon:list())
       end, { desc = 'Toggle [H]arpoon quick menu' })
@@ -1144,61 +1320,62 @@ require('lazy').setup({
       --   harpoon:list():next()
       -- end, { desc = 'Cycle to [N]ext harpoon buffer' })
 
-      vim.keymap.set('n', '<C-1>', function()
-        harpoon:list():select(1)
-      end)
-      vim.keymap.set('n', '<C-2>', function()
-        harpoon:list():select(2)
-      end)
-      vim.keymap.set('n', '<C-3>', function()
-        harpoon:list():select(3)
-      end)
-      vim.keymap.set('n', '<C-4>', function()
-        harpoon:list():select(4)
-      end)
+      -- vim.keymap.set('n', '<C-1>', function()
+      --   harpoon:list():select(1)
+      -- end)
+      -- vim.keymap.set('n', '<C-2>', function()
+      --   harpoon:list():select(2)
+      -- end)
+      -- vim.keymap.set('n', '<C-3>', function()
+      --   harpoon:list():select(3)
+      -- end)
+      -- vim.keymap.set('n', '<C-4>', function()
+      --   harpoon:list():select(4)
+      -- end)
 
-      -- -- telescope config
-      -- local conf = require('telescope.config').values
-      -- local function toggle_telescope(harpoon_files)
-      --   local file_paths = {}
-      --   for _, item in ipairs(harpoon_files.items) do
-      --     table.insert(file_paths, item.value)
-      --   end
-      --
-      --   require('telescope.pickers')
-      --     .new({}, {
-      --       prompt_title = 'Harpoon',
-      --       finder = require('telescope.finders').new_table {
-      --         results = file_paths,
-      --       },
-      --       previewer = conf.file_previewer {},
-      --       sorter = conf.generic_sorter {},
-      --     })
-      --     :find()
-      -- end
-      --
-      -- vim.keymap.set('n', '<C-S-h>', function()
-      --   toggle_telescope(harpoon:list())
-      -- end, { desc = 'Open [H]arpoon window' })
-      --
-      -- -- open files in splits / tabs
-      -- harpoon:extend {
-      --   UI_CREATE = function(cx)
-      --     vim.keymap.set('n', '<C-v>', function()
-      --       harpoon.ui:select_menu_item { vsplit = true }
-      --     end, { buffer = cx.bufnr })
-      --
-      --     vim.keymap.set('n', '<C-x>', function()
-      --       harpoon.ui:select_menu_item { split = true }
-      --     end, { buffer = cx.bufnr })
-      --
-      --     vim.keymap.set('n', '<C-t>', function()
-      --       harpoon.ui:select_menu_item { tabedit = true }
-      --     end, { buffer = cx.bufnr })
-      --   end,
-      -- }
+      -- telescope config
+      local conf = require('telescope.config').values
+      local function toggle_telescope(harpoon_files)
+        local file_paths = {}
+        for _, item in ipairs(harpoon_files.items) do
+          table.insert(file_paths, item.value)
+        end
+
+        require('telescope.pickers')
+          .new({}, {
+            prompt_title = 'Harpoon',
+            finder = require('telescope.finders').new_table {
+              results = file_paths,
+            },
+            previewer = conf.file_previewer {},
+            sorter = conf.generic_sorter {},
+          })
+          :find()
+      end
+
+      vim.keymap.set('n', '<leader>sh', function()
+        toggle_telescope(harpoon:list())
+      end, { desc = '[S]earch [H]arpoon list' })
+
+      -- open files in splits / tabs
+      harpoon:extend {
+        UI_CREATE = function(cx)
+          vim.keymap.set('n', '<C-v>', function()
+            harpoon.ui:select_menu_item { vsplit = true }
+          end, { buffer = cx.bufnr })
+
+          vim.keymap.set('n', '<C-x>', function()
+            harpoon.ui:select_menu_item { split = true }
+          end, { buffer = cx.bufnr })
+
+          vim.keymap.set('n', '<C-t>', function()
+            harpoon.ui:select_menu_item { tabedit = true }
+          end, { buffer = cx.bufnr })
+        end,
+      }
     end,
   },
+  -- { 'ziglang/zig.vim', },
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.

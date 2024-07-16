@@ -41,7 +41,7 @@ local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
 local bundles = {
-  vim.fn.glob(javadbg_install .. 'com.microsoft.java.debug.plugin-0.50.0.jar'),
+  vim.fn.glob(javadbg_install .. 'com.microsoft.java.debug.plugin-0.53.0.jar'),
 }
 vim.list_extend(bundles, vim.split(vim.fn.glob(javatest_install .. '*.jar', true), '\n'))
 
@@ -66,7 +66,7 @@ local config = {
     'java.base/java.lang=ALL-UNNAMED',
 
     '-jar',
-    jdtls_install .. '/plugins/org.eclipse.equinox.launcher_1.6.800.v20240330-1250.jar',
+    jdtls_install .. '/plugins/org.eclipse.equinox.launcher_1.6.900.v20240613-2009.jar',
 
     '-configuration',
     config_path,

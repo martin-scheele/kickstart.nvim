@@ -139,9 +139,12 @@ vim.opt.mouse = 'a'
 vim.opt.showmode = false
 
 -- Sync clipboard between OS and Neovim.
+--  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.opt.clipboard = 'unnamedplus' -- martin - requires xclip
+vim.schedule(function()
+  vim.opt.clipboard = 'unnamedplus'
+end)
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -185,14 +188,12 @@ vim.opt.scrolloff = 10
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
--- Set highlight on search, but clear on pressing <Esc> in normal mode
+-- Clear highlights on search when pressing <Esc> in normal mode
+--  See `:help hlsearch`
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
-vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
@@ -243,9 +244,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazypath) then
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  -- vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   if vim.v.shell_error ~= 0 then
     error('Error cloning lazy.nvim:\n' .. out)
@@ -274,12 +274,6 @@ require('lazy').setup({
   --
   -- Use `opts = {}` to force a plugin to be loaded.
   --
-  --  This is equivalent to:
-  --    require('Comment').setup({})
-
-  -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
-
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`. This is equivalent to the following Lua:
   --    require('gitsigns').setup({ ... })
@@ -316,41 +310,118 @@ require('lazy').setup({
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-    config = function() -- This is the function that runs, AFTER loading
-      require('which-key').setup()
-
+    -- config = function() -- This is the function that runs, AFTER loading
+    --   require('which-key').setup {
+    --     icons = {
+    --       -- set icon mappings to true if you have a Nerd Font
+    --       mappings = vim.g.have_nerd_font,
+    --       -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
+    --       -- default whick-key.nvim defined Nerd Font icons, otherwise define a string table
+    --       keys = vim.g.have_nerd_font and {} or {
+    --         Up = '<Up> ',
+    --         Down = '<Down> ',
+    --         Left = '<Left> ',
+    --         Right = '<Right> ',
+    --         C = '<C-…> ',
+    --         M = '<M-…> ',
+    --         D = '<D-…> ',
+    --         S = '<S-…> ',
+    --         CR = '<CR> ',
+    --         Esc = '<Esc> ',
+    --         ScrollWheelDown = '<ScrollWheelDown> ',
+    --         ScrollWheelUp = '<ScrollWheelUp> ',
+    --         NL = '<NL> ',
+    --         BS = '<BS> ',
+    --         Space = '<Space> ',
+    --         Tab = '<Tab> ',
+    --         F1 = '<F1>',
+    --         F2 = '<F2>',
+    --         F3 = '<F3>',
+    --         F4 = '<F4>',
+    --         F5 = '<F5>',
+    --         F6 = '<F6>',
+    --         F7 = '<F7>',
+    --         F8 = '<F8>',
+    --         F9 = '<F9>',
+    --         F10 = '<F10>',
+    --         F11 = '<F11>',
+    --         F12 = '<F12>',
+    --       },
+    --     },
+    --   }
+    --
+    --   -- Document existing key chains
+    --   -- require('which-key').register {
+    --   --   ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
+    --   --   ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
+    --   --   ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
+    --   --   ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
+    --   --   ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+    --   --   ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
+    --   --   ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+    --   -- }
+    --   -- -- visual mode
+    --   -- require('which-key').register({
+    --   --   ['<leader>h'] = { 'Git [H]unk' },
+    --   -- }, { mode = 'v' })
+    --   require('which-key').add {
+    --     { '<leader>c', group = '[C]ode' },
+    --     { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
+    --     { '<leader>d', group = '[D]ocument' },
+    --     { '<leader>r', group = '[R]ename' },
+    --     { '<leader>s', group = '[S]earch' },
+    --     { '<leader>t', group = '[T]oggle' },
+    --     { '<leader>w', group = '[W]orkspace' },
+    --   }
+    -- end,
+    opts = {
+      icons = {
+        -- set icon mappings to true if you have a Nerd Font
+        mappings = vim.g.have_nerd_font,
+        -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
+        -- default whick-key.nvim defined Nerd Font icons, otherwise define a string table
+        keys = vim.g.have_nerd_font and {} or {
+          Up = '<Up> ',
+          Down = '<Down> ',
+          Left = '<Left> ',
+          Right = '<Right> ',
+          C = '<C-…> ',
+          M = '<M-…> ',
+          D = '<D-…> ',
+          S = '<S-…> ',
+          CR = '<CR> ',
+          Esc = '<Esc> ',
+          ScrollWheelDown = '<ScrollWheelDown> ',
+          ScrollWheelUp = '<ScrollWheelUp> ',
+          NL = '<NL> ',
+          BS = '<BS> ',
+          Space = '<Space> ',
+          Tab = '<Tab> ',
+          F1 = '<F1>',
+          F2 = '<F2>',
+          F3 = '<F3>',
+          F4 = '<F4>',
+          F5 = '<F5>',
+          F6 = '<F6>',
+          F7 = '<F7>',
+          F8 = '<F8>',
+          F9 = '<F9>',
+          F10 = '<F10>',
+          F11 = '<F11>',
+          F12 = '<F12>',
+        },
+      },
       -- Document existing key chains
-      -- require('which-key').register {
-      --   ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-      --   ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-      --   ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-      --   ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-      --   ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-      --   ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-      --   ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
-      -- }
-      -- -- visual mode
-      -- require('which-key').register({
-      --   ['<leader>h'] = { 'Git [H]unk' },
-      -- }, { mode = 'v' })
-      require('which-key').add {
-        { '<leader>c', group = '[C]ode' },
-        -- { '<leader>c_', hidden = true },
+      spec = {
+        { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
         { '<leader>d', group = '[D]ocument' },
-        -- { '<leader>d_', hidden = true },
-        -- { '<leader>h', group = 'Git [H]unk' },
-        -- { '<leader>h_', hidden = true },
         { '<leader>r', group = '[R]ename' },
-        -- { '<leader>r_', hidden = true },
         { '<leader>s', group = '[S]earch' },
-        -- { '<leader>s_', hidden = true },
-        { '<leader>t', group = '[T]oggle' },
-        -- { '<leader>t_', hidden = true },
         { '<leader>w', group = '[W]orkspace' },
-        -- { '<leader>w_', hidden = true },
-        -- { '<leader>h', desc = 'Git [H]unk', mode = { 'n', 'v' } },
-      }
-    end,
+        { '<leader>t', group = '[T]oggle' },
+        { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+      },
+    },
   },
 
   -- NOTE: Plugins can specify dependencies.
@@ -469,7 +540,22 @@ require('lazy').setup({
     end,
   },
 
-  { -- LSP Configuration & Plugins
+  -- LSP Plugins
+  {
+    -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
+    -- used for completion, annotations and signatures of Neovim apis
+    'folke/lazydev.nvim',
+    ft = 'lua',
+    opts = {
+      library = {
+        -- Load luvit types when the `vim.uv` word is found
+        { path = 'luvit-meta/library', words = { 'vim%.uv' } },
+      },
+    },
+  },
+  { 'Bilal2453/luvit-meta', lazy = true },
+  {
+    -- Main LSP Configuration
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
@@ -481,9 +567,8 @@ require('lazy').setup({
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
 
-      -- `neodev` configures Lua LSP for your Neovim config, runtime and plugins
-      -- used for completion, annotations and signatures of Neovim apis
-      { 'folke/neodev.nvim', opts = {} },
+      -- Allows extra capabilities provided by nvim-cmp
+      'hrsh7th/cmp-nvim-lsp',
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -558,11 +643,7 @@ require('lazy').setup({
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-
-          -- Opens a popup that displays documentation about the word under your cursor
-          --  See `:help K` for why this keymap.
-          map('K', vim.lsp.buf.hover, 'Hover Documentation')
+          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
@@ -574,7 +655,7 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client.server_capabilities.documentHighlightProvider then
+          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -597,13 +678,13 @@ require('lazy').setup({
             })
           end
 
-          -- The following autocommand is used to enable inlay hints in your
+          -- The following code creates a keymap to toggle inlay hints in your
           -- code, if the language server you are using supports them
           --
           -- This may be unwanted, since they displace some of your code
-          if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
+          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
             map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
           end
         end,
@@ -638,6 +719,8 @@ require('lazy').setup({
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
         clangd = {},
+        -- eslint = {},
+        eslint_d = {},
         jdtls = {},
         lua_ls = {
           -- cmd = {...},
@@ -655,15 +738,20 @@ require('lazy').setup({
           },
         },
         basedpyright = {
+          enabled = true,
           settings = {
+            -- autoImportCompletions = true,
+            disableOrganizeImports = true,
             basedpyright = {
-              -- autoImportCompletions = true,
-              disableOrganizeImports = true,
-              -- ignore = { '*' },
-              -- typeCheckingMode = 'off',
-              -- typeCheckingMode = 'standard',
-              -- typeCheckingMode = 'strict',
-              -- typeCheckingMode = 'all',
+              analysis = {
+                -- ignore = { '*' },
+                diagnosticMode = 'openFilesOnly',
+                -- typeCheckingMode = 'off',
+                typeCheckingMode = 'standard',
+                -- typeCheckingMode = 'strict',
+                -- typeCheckingMode = 'all',
+                useLibraryCodeForTypes = true,
+              },
             },
           },
         },
@@ -719,12 +807,13 @@ require('lazy').setup({
 
   { -- Autoformat
     'stevearc/conform.nvim',
-    lazy = false,
+    event = { 'BufWritePre' },
+    cmd = { 'ConformInfo' },
     keys = {
       {
         '<leader>f',
         function()
-          require('conform').format { async = true, lsp_fallback = true }
+          require('conform').format { async = true, lsp_format = 'fallback' }
         end,
         mode = '',
         desc = '[F]ormat buffer',
@@ -732,26 +821,32 @@ require('lazy').setup({
     },
     opts = {
       notify_on_error = false,
-      -- format_on_save = function(bufnr)
-      --   -- Disable "format_on_save lsp_fallback" for languages that don't
-      --   -- have a well standardized coding style. You can add additional
-      --   -- languages here or re-enable it for the disabled ones.
-      --   local disable_filetypes = { c = true, cpp = true, java = true }
-      --   return {
-      --     timeout_ms = 500,
-      --     lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
-      --   }
-      -- end,
       format_on_save = function(bufnr)
-        local ignore_filetypes = { 'c', 'cpp', 'java' }
-        if vim.tbl_contains(ignore_filetypes, vim.bo[bufnr].filetype) then
-          return
+        -- Disable "format_on_save lsp_fallback" for languages that don't
+        -- have a well standardized coding style. You can add additional
+        -- languages here or re-enable it for the disabled ones.
+        local disable_filetypes = { c = true, cpp = true, java = true }
+        local lsp_format_opt
+        if disable_filetypes[vim.bo[bufnr].filetype] then
+          lsp_format_opt = 'never'
+        else
+          lsp_format_opt = 'fallback'
         end
         return {
           timeout_ms = 500,
-          lsp_format = 'fallback',
+          lsp_format = lsp_format_opt,
         }
       end,
+      -- format_on_save = function(bufnr)
+      --   local ignore_filetypes = { 'c', 'cpp', 'java' }
+      --   if vim.tbl_contains(ignore_filetypes, vim.bo[bufnr].filetype) then
+      --     return
+      --   end
+      --   return {
+      --     timeout_ms = 500,
+      --     lsp_format = 'fallback',
+      --   }
+      -- end,
       formatters_by_ft = {
         c = { 'clang-format' },
         java = { 'google-java-format' },
@@ -759,9 +854,8 @@ require('lazy').setup({
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
-        -- You can use a sub-list to tell conform to run *until* a formatter
-        -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
+        -- You can use 'stop_after_first' to run the first available formatter from the list
+        -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
     },
   },
@@ -869,6 +963,11 @@ require('lazy').setup({
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
+          {
+            name = 'lazydev',
+            -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
+            group_index = 0,
+          },
           { name = 'nvim_lsp' },
           { name = 'luasnip' },
           { name = 'path' },
@@ -1046,6 +1145,8 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
     build = ':TSUpdate',
+    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = {
         'bash',
@@ -1057,9 +1158,12 @@ require('lazy').setup({
         'lua',
         'luadoc',
         'markdown',
+        'markdown_inline',
         'python',
+        'query',
         'rust',
         'toml',
+        'typescript',
         'vim',
         'vimdoc',
         'xml',
@@ -1180,21 +1284,12 @@ require('lazy').setup({
         },
       },
     },
-    config = function(_, opts)
-      -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-
-      -- Prefer git instead of curl in order to improve connectivity in some environments
-      require('nvim-treesitter.install').prefer_git = true
-      ---@diagnostic disable-next-line: missing-fields
-      require('nvim-treesitter.configs').setup(opts)
-
-      -- There are additional nvim-treesitter modules that you can use to interact
-      -- with nvim-treesitter. You should go explore a few and see what interests you:
-      --
-      --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-      --    - Show your current text: https://github.com/nvim-treesitter/nvim-treesitter-context
-      --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
-    end,
+    -- There are additional nvim-treesitter modules that you can use to interact
+    -- with nvim-treesitter. You should go explore a few and see what interests you:
+    --
+    --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
+    --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
+    --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
   -- {
   --   'echasnovski/mini.ai',
@@ -1300,7 +1395,58 @@ require('lazy').setup({
       vim.g.rustaceanvim = vim.tbl_deep_extend('keep', vim.g.rustaceanvim or {}, opts or {})
     end,
   },
-
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {},
+    config = function()
+      require('typescript-tools').setup {
+        settings = {
+          -- spawn additional tsserver instance to calculate diagnostics on it
+          separate_diagnostic_server = true,
+          -- "change"|"insert_leave" determine when the client asks the server about diagnostic
+          publish_diagnostic_on = 'insert_leave',
+          -- array of strings("fix_all"|"add_missing_imports"|"remove_unused"|
+          -- "remove_unused_imports"|"organize_imports") -- or string "all"
+          -- to include all supported code actions
+          -- specify commands exposed as code_actions
+          expose_as_code_action = { 'fix_all', 'add_missing_imports', 'remove_unused', 'remove_unused_imports', 'organize_imports' },
+          -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+          -- not exists then standard path resolution strategy is applied
+          tsserver_path = nil,
+          -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
+          -- (see 💅 `styled-components` support section)
+          tsserver_plugins = {},
+          -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
+          -- memory limit in megabytes or "auto"(basically no limit)
+          tsserver_max_memory = 'auto',
+          -- described below
+          tsserver_format_options = {},
+          tsserver_file_preferences = {},
+          -- locale of all tsserver messages, supported locales you can find here:
+          -- https://github.com/microsoft/TypeScript/blob/3c221fc086be52b19801f6e8d82596d04607ede6/src/compiler/utilitiesPublic.ts#L620
+          tsserver_locale = 'en',
+          -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
+          complete_function_calls = false,
+          include_completions_with_insert_text = true,
+          -- CodeLens
+          -- WARNING: Experimental feature also in VSCode, because it might hit performance of server.
+          -- possible values: ("off"|"all"|"implementations_only"|"references_only")
+          code_lens = 'off',
+          -- by default code lenses are displayed on all referencable values and for some of you it can
+          -- be too much this option reduce count of them by removing member references from lenses
+          disable_member_code_lens = true,
+          -- JSXCloseTag
+          -- WARNING: it is disabled by default (maybe you configuration or distro already uses nvim-ts-autotag,
+          -- that maybe have a conflict if enable this feature. )
+          jsx_close_tag = {
+            enable = false,
+            filetypes = { 'javascriptreact', 'typescriptreact' },
+          },
+        },
+      }
+    end,
+  },
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
